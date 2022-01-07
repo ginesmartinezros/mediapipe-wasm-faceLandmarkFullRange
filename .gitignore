@@ -4,3 +4,7 @@ mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user
 mediapipe/provisioning_profile.mobileprovision
 .configure.bazelrc
 .user.bazelrc
+node_modules
+hello-server/public/hello-world-simple.data
+hello-server/public/hello-world-simple.wasm
+hello-server/public/hello-world-simple.js
