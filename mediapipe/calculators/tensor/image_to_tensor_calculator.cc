@@ -33,7 +33,9 @@
 #include "mediapipe/gpu/gpu_origin.pb.h"
 
 #if !MEDIAPIPE_DISABLE_OPENCV
+#ifndef __EMSCRIPTEN__
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
+#endif // __EMSCRIPTEN__
 #endif
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -42,7 +44,7 @@
 #if MEDIAPIPE_METAL_ENABLED
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_metal.h"
 #include "mediapipe/gpu/MPPMetalHelper.h"
-#elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+#elif (MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31)
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_buffer.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #else
@@ -304,12 +306,12 @@ class ImageToTensorCalculator : public Node {
       }
     } else {
       if (!cpu_converter_) {
-#if !MEDIAPIPE_DISABLE_OPENCV
+#if !MEDIAPIPE_DISABLE_OPENCV && !defined(__EMSCRIPTEN__)
         ASSIGN_OR_RETURN(cpu_converter_,
                          CreateOpenCvConverter(cc, GetBorderMode()));
 #else
         LOG(FATAL) << "Cannot create image to tensor opencv converter since "
-                      "MEDIAPIPE_DISABLE_OPENCV is defined.";
+                      "MEDIAPIPE_DISABLE_OPENCV or __EMSCRIPTEN__ is defined.";
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
       }
     }

@@ -64,9 +64,9 @@
 #include "mediapipe/framework/validated_graph_config.h"
 #include "mediapipe/gpu/graph_support.h"
 #include "mediapipe/util/cpu_util.h"
-#if !MEDIAPIPE_DISABLE_GPU
+#if !MEDIAPIPE_DISABLE_GPU // && !defined(__EMSCRIPTEN__) ?
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
+#endif  // !MEDIAPIPE_DISABLE_GPU // && !defined(__EMSCRIPTEN__) ?
 
 namespace mediapipe {
 

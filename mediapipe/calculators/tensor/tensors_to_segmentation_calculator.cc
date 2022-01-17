@@ -20,15 +20,19 @@
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/util/resource_util.h"
 #include "tensorflow/lite/interpreter.h"
+
+#if !defined(__EMSCRIPTEN__)
+#include "mediapipe/framework/formats/image_opencv.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
+#endif
+
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -159,8 +163,10 @@ class TensorsToSegmentationCalculator : public CalculatorBase {
     return options_.gpu_origin() != mediapipe::GpuOrigin_Mode_TOP_LEFT;
   }
 
+  #if !defined(__EMSCRIPTEN__)
   template <class T>
   absl::Status ApplyActivation(cv::Mat& tensor_mat, cv::Mat* small_mask_mat);
+  #endif // !defined(__EMSCRIPTEN__)
 
   ::mediapipe::TensorsToSegmentationCalculatorOptions options_;
 
@@ -243,7 +249,12 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
   const auto& input_tensors =
       cc->Inputs().Tag(kTensorsTag).Get<std::vector<Tensor>>();
 
+#if !defined(__EMSCRIPTEN__) 
   bool use_gpu = false;
+#else
+  bool use_gpu = true; // important: setting to default true for wasm canvas rendering
+#endif
+
   if (CanUseGpu()) {
     // Use GPU processing only if at least one input tensor is already on GPU.
     for (const auto& tensor : input_tensors) {
@@ -324,6 +335,7 @@ absl::Status TensorsToSegmentationCalculator::ProcessCpu(
     output_height = size.second;
   }
 
+  #if !defined(__EMSCRIPTEN__)
   // Create initial working mask.
   cv::Mat small_mask_mat(cv::Size(tensor_width, tensor_height), CV_32FC1);
 
@@ -359,10 +371,12 @@ absl::Status TensorsToSegmentationCalculator::ProcessCpu(
   // Upsample small mask into output.
   cv::resize(small_mask_mat, output_mat, cv::Size(output_width, output_height));
   cc->Outputs().Tag(kMaskTag).Add(output_mask.release(), cc->InputTimestamp());
+  #endif // !defined(__EMSCRIPTEN__)
 
   return absl::OkStatus();
 }
 
+#if !defined(__EMSCRIPTEN__)
 template <class T>
 absl::Status TensorsToSegmentationCalculator::ApplyActivation(
     cv::Mat& tensor_mat, cv::Mat* small_mask_mat) {
@@ -410,6 +424,7 @@ absl::Status TensorsToSegmentationCalculator::ApplyActivation(
 
   return absl::OkStatus();
 }
+#endif // !defined(__EMSCRIPTEN__)
 
 // Steps:
 // 1. receive tensor

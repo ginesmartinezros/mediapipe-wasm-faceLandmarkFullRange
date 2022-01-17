@@ -215,6 +215,7 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
     ] + select({
+        "//mediapipe:emscripten_wasm": [],
         "//conditions:default": [
             "//mediapipe/framework/port:opencv_imgproc",
         ],

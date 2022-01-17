@@ -46,10 +46,15 @@ cc_library(
     name = "desktop_live_gpu_calculators",
     deps = [
         "//mediapipe/calculators/core:constant_side_packet_calculator",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
+        # "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/graphs/face_mesh/subgraphs:face_renderer_gpu",
         "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
-    ],
+    ] + select({
+        "//mediapipe:emscripten_wasm": [],
+        "//conditions:default": [
+            "//mediapipe/calculators/core:flow_limiter_calculator",
+        ]
+    }),
 )
 
 cc_library(

@@ -352,12 +352,12 @@ cc_library(
         ":recolor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/formats:image_frame_opencv",
+        # "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:color_cc_proto",
-        "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_imgproc",
+        # "//mediapipe/framework/port:opencv_core",
+        # "//mediapipe/framework/port:opencv_imgproc",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -365,6 +365,13 @@ cc_library(
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:shader_util",
+        ],
+    }) + select({
+        "//mediapipe:emscripten_wasm": [],
+        "//conditions:default": [
+            "//mediapipe/framework/formats:image_frame_opencv",
+            "//mediapipe/framework/port:opencv_core",
+            "//mediapipe/framework/port:opencv_imgproc",
         ],
     }),
     alwayslink = 1,

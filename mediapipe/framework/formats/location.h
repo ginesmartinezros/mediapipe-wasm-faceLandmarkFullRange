@@ -34,7 +34,11 @@
 #if !defined(LOCATION_OPENCV)
 #  if !MEDIAPIPE_DISABLE_OPENCV && \
       (!defined(MEDIAPIPE_MOBILE) || defined(MEDIAPIPE_ANDROID_OPENCV))
-#    define LOCATION_OPENCV 1
+#     if defined(__EMSCRIPTEN__)
+#       define LOCATION_OPENCV 0
+#     else
+#       define LOCATION_OPENCV 1
+#     endif // __EMSCRIPTEN__
 #  else
 #    define LOCATION_OPENCV 0
 #  endif
