@@ -1,6 +1,6 @@
 
 build:
-	bazel build -c opt //hello-world:hello-world-simple --config=wasm
+	bazel build -c opt //hello-world:hello-world-simple --config=wasm --sandbox_debug --verbose_failures
 run:
 	rm -f -r hello-server/public/hello-world-simple.js hello-server/public/hello-world-simple.wasm hello-server/public/hello-world-simple.data
 	cp -r bazel-out/wasm-opt/bin/hello-world/hello-world-simple.js hello-server/public/

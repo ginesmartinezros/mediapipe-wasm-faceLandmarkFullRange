@@ -157,6 +157,7 @@ config_setting(
     values = {
         "crosstool_top": "@emsdk//emscripten_toolchain:everything",
         "cpu": "wasm",
+        "copt": "-msimd128",
     },
 )
 
