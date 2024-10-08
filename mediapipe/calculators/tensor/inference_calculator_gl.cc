@@ -92,7 +92,7 @@ absl::Status InferenceCalculatorGlImpl::UpdateContract(CalculatorContract* cc) {
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
-  MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
+  // MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
   return absl::OkStatus();
 }
 
