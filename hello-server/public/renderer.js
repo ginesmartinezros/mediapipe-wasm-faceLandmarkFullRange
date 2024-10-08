@@ -11,13 +11,10 @@ class State {
         this.graph = null;
         this.imgChannelsCount = 4;
         this.detectFace = false;
-        this.selfieSegmentation = false;
-        this.useBackgroundImage = false;
-        this.useBackgroundColor = false;
+        
         this.showFaceMesh = false;
         this.maskRawData = null;
         this.maskCtx = null;
-        this.background = null;
     }
 
     getMaskRawData() {
@@ -26,38 +23,6 @@ class State {
 };
 
 const state = new State();
-
-const MASK = {
-    FACE_DETECTION: 1,
-    SELFIE_SEGMENTATION: 2
-};
-
-const setBackgroundColor = function (event) {
-    console.log("event.target.value", event.target.value);
-    state.maskCtx.fillStyle = event.target.value;
-    state.maskCtx.fillRect(0, 0, 640, 480);
-    state.maskRawData = state.maskCtx.getImageData(0, 0, 640, 480);
-    Module.HEAPU8.set(state.maskRawData.data, state.maskPointer);
-
-}
-
-
-const loadFile = function (event) {
-    const image = document.getElementById('output');
-    image.src = URL.createObjectURL(event.target.files[0]);
-    if (!state.background) {
-        state.background = new Image();
-    }
-    state.background.onload = function () {
-        state.maskCtx.drawImage(state.background, 0, 0, 640, 480);
-        state.maskRawData = state.maskCtx.getImageData(0, 0, 640, 480);
-        Module.HEAPU8.set(state.maskRawData.data, state.maskPointer);
-
-    }
-    state.background.src = document.getElementById("output").src; // Set source path
-
-};
-
 
 function runGraph(state, videoElem, Module) {
     if (!state.graph) {
@@ -127,22 +92,7 @@ function runGraph(state, videoElem, Module) {
                 }
             }
 
-            if (state.detectFace) {
-                const n = state.graph.boundingBoxes.size();
-
-                state.canvasCtxOutput.strokeStyle = "cyan";
-                state.canvasCtxOutput.lineWidth = 5;
-                state.canvasCtxOutput.globalAlpha = 0.7;
-
-                for (let i = 0; i < n; i++) {
-                    const bb = state.graph.boundingBoxes.get(i);
-                    const w = bb.width * rawData.width;
-                    const h = bb.height * rawData.height;
-                    const x = bb.x * rawData.width;
-                    const y = bb.y * rawData.height;
-                    state.canvasCtxOutput.strokeRect(x, y, w, h);
-                }
-            }
+            
         },
         width: 640,
         height: 480
@@ -151,6 +101,7 @@ function runGraph(state, videoElem, Module) {
     camera.start();
     // Module.runMPGraph();
 }
+
 
 
 window.onload = function () {
@@ -240,59 +191,8 @@ window.onload = function () {
         }
     }
 
-    document.getElementById("btnFaceDetection").onclick = function () {
-        state.detectFace = !state.detectFace;
-        if (state.detectFace) {
-            document.getElementById("btnFaceDetection").innerHTML = "<span>Disable Face Detection</span>";
-        } else {
-            document.getElementById("btnFaceDetection").innerHTML = "<span>Enable Face Detection</span>";
-        }
-    }
+    
 
-    document.getElementById("btnSelfieSegmentation").onclick = function () {
-        state.selfieSegmentation = !state.selfieSegmentation;
-        if (state.selfieSegmentation) {
-            state.canvasDirectInputOutput.style.display = "none";
-            state.canvasGL.style.display = "";
-            document.getElementById("selfie_segmentation_opts").style.display = "";
-            document.getElementById("btnSelfieSegmentation").innerHTML = "<span>Disable Selfie Segmentation</span>";
-        } else {
-            state.canvasDirectInputOutput.style.display = "";
-            state.canvasGL.style.display = "none";
-
-            document.getElementById("selfie_segmentation_opts").style.display = "none";
-            document.getElementById("btnSelfieSegmentation").innerHTML = "<span>Enable Selfie Segmentation</span>";
-        }
-
-    }
-
-    document.getElementById("btnSetBackground").onclick = function () {
-        state.useBackgroundImage = !state.useBackgroundImage;
-
-        if (state.useBackgroundImage) {
-            document.getElementById("background_input").style.display = "block";
-        } else {
-            document.getElementById("background_input").style.display = "none";
-        }
-    }
-
-    document.getElementById("btnSetBackgroundColor").onclick = function () {
-        state.useBackgroundColor = !state.useBackgroundColor;
-
-        if (state.selfieSegmentation && state.useBackgroundColor) {
-            document.getElementById("color_input").style.display = "block";
-        } else {
-            document.getElementById("color_input").style.display = "none";
-        }
-    }
-
-    document.getElementById("file").onchange = function (event) {
-        loadFile(event);
-    }
-
-    document.getElementById("favcolor").onchange = function (event) {
-        setBackgroundColor(event);
-    }
 }
 
 
