@@ -30,78 +30,81 @@ function runGraph(state, videoElem, Module) {
     }
 
     const camera = new Camera(videoElem, {
-        onFrame: async () => {
-            state.canvasCtx.drawImage(videoElem, 0, 0, 640, 480);
-            state.canvasDirectInputOutputCtx.drawImage(videoElem, 0, 0, 640, 480);
-
-            const rawData = state.canvasCtx.getImageData(0, 0, 640, 480);
-            const rawDataSize = state.imgChannelsCount * rawData.width * rawData.height;
-
-            state.canvasCtxOutput.clearRect(0, 0, state.canvasElementOverlay.width, state.canvasElementOverlay.height);
-
-            // state.canvasCtxOutput.drawImage(state.canvasCtxGL.canvas, 0, 0, 640, 480);
-
-            if (!state.imgSize || state.imgSize != rawDataSize) {
-
-                if (state.imgPointer) {
-                    Module._free(state.imgPointer);
-                }
-
-                if (state.maskPointer) {
-                    Module._free(state.maskPointer);
-                }
-
-                state.imgSize = rawDataSize;
-                state.imgPointer = Module._malloc(state.imgSize);
-                state.maskPointer = Module._malloc(state.imgSize);
-            }
-
-            Module.HEAPU8.set(rawData.data, state.imgPointer);
-
-            if (state.getMaskRawData() && (state.useBackgroundImage || state.useBackgroundColor)) {
-                // Module.HEAPU8.set(state.getMaskRawData().data, state.maskPointer);
-                const ret = state.graph.runWithMask(state.imgPointer, state.maskPointer, state.imgSize);
-            } else {
-                const ret = state.graph.runWithMask(state.imgPointer, state.imgPointer, state.imgSize);
-            }
-
-            const n = 468; //state.graph.facesLandmarks.size();
-            if (state.showFaceMesh && n > 0) {
-                
-                state.canvasCtxOutput.strokeStyle = "white";
-                state.canvasCtxOutput.lineWidth = 1;
-                state.canvasCtxOutput.globalAlpha = 1.0;
-
-                state.canvasCtxOutput.beginPath();
-                for (let i = 0; i < FACEMESH_TESSELATION.length;i ++) {
-                    // let u = FACEMESH_TESSELATION[i][0]; //state.graph.facesLandmarks.get(FACEMESH_TESSELATION[i][0]);
-                    // let v = FACEMESH_TESSELATION[i][1] //state.graph.facesLandmarks.get(FACEMESH_TESSELATION[i][1]);
-                    // u = [0.1, 0.1]; //state.graph.facesLandmarks.get(FACEMESH_TESSELATION[i][0]);
-                    // v = [0.4, 0.4]; //state.graph.facesLandmarks.get(FACEMESH_TESSELATION[i][1]);
-                    // const u = state.graph.getFaceMeshLandMark(FACEMESH_TESSELATION[i][0]);
-                    // const v = state.graph.getFaceMeshLandMark(FACEMESH_TESSELATION[i][1]);
-                    const u = state.graph.getFaceMeshLandMark(FACEMESH_TESSELATION[i][0]);
-                    const v = state.graph.getFaceMeshLandMark(FACEMESH_TESSELATION[i][1]);
-
-
-                    state.canvasCtxOutput.moveTo(u.x * rawData.width, u.y*rawData.height);
-
-
-                    state.canvasCtxOutput.lineTo(v.x * rawData.width, v.y*rawData.height);
-                    state.canvasCtxOutput.stroke();
-                }
-            }
-
-            
-        },
         width: 640,
-        height: 480
+        height: 480,
     });
 
-    camera.start();
-    // Module.runMPGraph();
-}
+    let frameSkip = 2; // Skip every 2 frames
+    let frameCount = 0;
 
+    // Use requestAnimationFrame for smoother frame processing
+    function processFrame() {
+        // Increment frame counter
+        frameCount++;
+
+        // Skip inference on some frames to reduce load
+        if (frameCount % frameSkip !== 0) {
+            // Continue to the next frame without doing inference
+            requestAnimationFrame(processFrame);
+            return;
+        }
+
+        state.canvasCtx.drawImage(videoElem, 0, 0, 640, 480);
+        state.canvasDirectInputOutputCtx.drawImage(videoElem, 0, 0, 640, 480);
+
+        const rawData = state.canvasCtx.getImageData(0, 0, 640, 480);
+        const rawDataSize = state.imgChannelsCount * rawData.width * rawData.height;
+
+        state.canvasCtxOutput.clearRect(0, 0, state.canvasElementOverlay.width, state.canvasElementOverlay.height);
+
+        if (!state.imgSize || state.imgSize != rawDataSize) {
+            if (state.imgPointer) {
+                Module._free(state.imgPointer);
+            }
+            if (state.maskPointer) {
+                Module._free(state.maskPointer);
+            }
+
+            state.imgSize = rawDataSize;
+            state.imgPointer = Module._malloc(state.imgSize);
+            state.maskPointer = Module._malloc(state.imgSize);
+        }
+
+        // Copy image data to WASM memory
+        Module.HEAPU8.set(rawData.data, state.imgPointer);
+
+        if (state.getMaskRawData() && (state.useBackgroundImage || state.useBackgroundColor)) {
+            state.graph.runWithMask(state.imgPointer, state.maskPointer, state.imgSize);
+        } else {
+            state.graph.runWithMask(state.imgPointer, state.imgPointer, state.imgSize);
+        }
+
+        // Draw face mesh if enabled
+        const n = 468; // number of face mesh landmarks
+        if (state.showFaceMesh && n > 0) {
+            state.canvasCtxOutput.strokeStyle = "white";
+            state.canvasCtxOutput.lineWidth = 1;
+            state.canvasCtxOutput.globalAlpha = 1.0;
+
+            state.canvasCtxOutput.beginPath();
+            for (let i = 0; i < FACEMESH_TESSELATION.length; i++) {
+                const u = state.graph.getFaceMeshLandMark(FACEMESH_TESSELATION[i][0]);
+                const v = state.graph.getFaceMeshLandMark(FACEMESH_TESSELATION[i][1]);
+
+                state.canvasCtxOutput.moveTo(u.x * rawData.width, u.y * rawData.height);
+                state.canvasCtxOutput.lineTo(v.x * rawData.width, v.y * rawData.height);
+                state.canvasCtxOutput.stroke();
+            }
+        }
+
+        // Continue to the next frame
+        requestAnimationFrame(processFrame);
+    }
+
+    // Start the camera and begin processing frames
+    camera.start();
+    requestAnimationFrame(processFrame);
+}
 
 
 window.onload = function () {
