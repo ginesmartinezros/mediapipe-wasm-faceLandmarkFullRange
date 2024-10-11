@@ -83,7 +83,7 @@ function runGraph(state, videoElem, Module) {
         const n = 468; // number of face mesh landmarks
         if (state.showFaceMesh && n > 0) {
             state.canvasCtxOutput.strokeStyle = "white";
-            state.canvasCtxOutput.lineWidth = 1;
+            state.canvasCtxOutput.lineWidth = 0.5;
             state.canvasCtxOutput.globalAlpha = 1.0;
 
             state.canvasCtxOutput.beginPath();
